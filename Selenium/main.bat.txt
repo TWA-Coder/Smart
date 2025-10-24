@@ -1,0 +1,1 @@
+"C:\Users\Akaruretwa\AppData\Local\Microsoft\WindowsApps\python.exe" "C:\Users\Akaruretwa\Smart\Selenium\main.py"

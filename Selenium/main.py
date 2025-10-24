@@ -1,6 +1,8 @@
 from selenium import webdriver
+import os
 import time
 import datetime
+import shutil
 from datetime import timedelta
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -28,7 +30,7 @@ search_box2 = driver.find_element(By.ID,'lbl_username')
 search_box2.send_keys('Mugabe Patrick')
 
 search_box2 = driver.find_element(By.ID,'lbl_password')
-search_box2.send_keys('Mugab@39')
+search_box2.send_keys('Mugabep@39')
 
 next_button1 = driver.find_element(By.ID,'FormSubmit')
 next_button1.click()
@@ -143,20 +145,7 @@ except:
 
 #empty click 2
 time.sleep(5)
-# empty_click2 = driver.find_element((By.XPATH, "//label[@data-i18n='to']"))
-# empty_click2.click()          
-# try:
-#     css_selector5 = f'[data-action="mnifyMenu"]'
-#     WebDriverWait(driver, 10).until(
-#                 EC.presence_of_element_located((By.CSS_SELECTOR,css_selector5))
-#             )
-#     search_box7 = driver.find_element(By.CSS_SELECTOR, css_selector5)
-#     search_box7.click()
-# except:
-#     print("css_selector5  is missing")
 
-
-#GENERATE_BUTTON_SELECTOR = driver.find_element(By.CLASS_NAME, 'btn.btn-primary.btn-sm')
 try:
     WebDriverWait(driver, 10).until(
     EC.element_to_be_clickable((By.XPATH, "//button[text()='Search']"))
@@ -240,5 +229,69 @@ except:
 
 
 time.sleep(20)
+
+# Direct the downloaded file to a specific folder
+
+DEFAULT_DOWNLOAD_DIR = os.path.join(os.path.expanduser("~"), "Downloads")
+TARGET_DIR = r"C:\Users\Akaruretwa\OneDrive - Old Mutual Africa Regions\Documents\PowerBI_Data"   # 👈 your desired folder
+os.makedirs(TARGET_DIR, exist_ok=True)
+
+# === 2️⃣ Set up Chrome ===
+chrome_options = Options()
+prefs = {
+    "download.default_directory": DEFAULT_DOWNLOAD_DIR,   # Chrome default path
+    "download.prompt_for_download": False,
+    "download.directory_upgrade": True,
+    "safebrowsing.enabled": True
+}
+chrome_options.add_experimental_option("prefs", prefs)
+
+driver = webdriver.Chrome(options=chrome_options)
+
+
+# === 3️⃣ Go to your site and trigger download ===
+driver.get("https://example.com/your-download-page")
+
+# Example: click a download button
+# driver.find_element("xpath", "//button[contains(text(),'Download Excel')]").click()
+
+# === 4️⃣ Wait for the download to finish ===
+def wait_for_download(download_dir, timeout=60):
+    """
+    Wait until the latest .crdownload file disappears,
+    meaning the download has finished.
+    """
+    seconds = 0
+    while seconds < timeout:
+        time.sleep(1)
+        files = os.listdir(download_dir)
+        # Check for unfinished downloads
+        if not any(f.endswith('.crdownload') for f in files):
+            return True
+        seconds += 1
+    return False
+
+wait_for_download(DEFAULT_DOWNLOAD_DIR)
+driver.quit()
+
+# === 5️⃣ Move the Excel file to your target folder ===
+def move_latest_excel(src_dir, dest_dir):
+    excel_files = [f for f in os.listdir(src_dir) if f.endswith((".xlsx", ".xls"))]
+    if not excel_files:
+        print("❌ No Excel files found in downloads.")
+        return None
+
+    # Get the newest file
+    latest_file = max(
+        [os.path.join(src_dir, f) for f in excel_files],
+        key=os.path.getmtime
+    )
+
+    dest_path = os.path.join(dest_dir, os.path.basename(latest_file))
+    shutil.move(latest_file, dest_path)
+    print(f"✅ Moved {os.path.basename(latest_file)} to {dest_dir}")
+    return dest_path
+
+move_latest_excel(DEFAULT_DOWNLOAD_DIR, TARGET_DIR)
 
 driver.quit()
